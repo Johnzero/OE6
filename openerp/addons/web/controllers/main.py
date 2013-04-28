@@ -28,6 +28,7 @@ except ImportError:
     xlwt = None
 
 from .. import common
+
 openerpweb = common.http
 
 #----------------------------------------------------------
@@ -96,7 +97,7 @@ html_template = """<!DOCTYPE html>
     <head>
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-        <title>富光实业ERP系统</title>
+        <title>富光FGA业务系统</title>
         <link rel="shortcut icon" href="/web/static/src/img/favicon.ico" type="image/x-icon"/>
         %(css)s
         %(js)s
@@ -243,7 +244,6 @@ class WebClient(openerpweb.Controller):
             return werkzeug.wrappers.Response(status=304)
 
         content, checksum = concat_files(files, intersperse=';')
-
         return self.make_conditional(
             req, req.make_response(content, [('Content-Type', 'application/javascript')]),
             last_modified, checksum)
@@ -1422,6 +1422,8 @@ class Binary(openerpweb.Controller):
             filename = '%s_%s' % (model.replace('.', '_'), id)
             if filename_field:
                 filename = res.get(filename_field, '') or filename
+            
+            if isinstance(filename, unicode): filename=filename.encode('utf8')
             return req.make_response(filecontent,
                 [('Content-Type', 'application/octet-stream'),
                  ('Content-Disposition', 'attachment; filename="%s"' % filename)])
@@ -1452,6 +1454,9 @@ class Binary(openerpweb.Controller):
             filename = '%s_%s' % (model.replace('.', '_'), id)
             if filename_field:
                 filename = res.get(filename_field, '') or filename
+            
+            if isinstance(filename, unicode): filename=filename.encode('utf8')
+            
             return req.make_response(filecontent,
                 headers=[('Content-Type', 'application/octet-stream'),
                         ('Content-Disposition', 'attachment; filename="%s"' % filename)],

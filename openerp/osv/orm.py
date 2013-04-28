@@ -96,11 +96,13 @@ def transfer_field_to_modifiers(field, modifiers):
 # For non-tree views, the context shouldn't be given.
 def transfer_node_to_modifiers(node, modifiers, context=None, in_tree_view=False):
     if node.get('attrs'):
-        modifiers.update(eval(node.get('attrs')))
+        modifiers.update(eval(node.get('attrs'),context))
 
     if node.get('states'):
         if 'invisible' in modifiers and isinstance(modifiers['invisible'], list):
              # TODO combine with AND or OR, use implicit AND for now.
+             context.update(uid = user, current_date = time.strftime
+                            ('%Y-%m-%d'),)
              modifiers['invisible'].append(('state', 'not in', node.get('states').split(',')))
         else:
              modifiers['invisible'] = [('state', 'not in', node.get('states').split(','))]
@@ -1842,7 +1844,7 @@ class BaseModel(object):
         _rec_name = self._rec_name
         if _rec_name not in self._columns:
             _rec_name = self._columns.keys()[0] if len(self._columns.keys()) > 0 else "id"
-
+        
         view = etree.Element('tree', string=self._description)
         etree.SubElement(view, 'field', name=_rec_name)
         return view

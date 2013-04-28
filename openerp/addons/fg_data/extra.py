@@ -28,7 +28,7 @@ class product_product(osv.osv):
     _columns = {
         'fullnum': fields.char('num', size=40),
         'source':fields.selection([(u'塑胶事业部',u'塑胶事业部'), (u'安全帽事业部',u'安全帽事业部'), 
-                (u'玻璃事业部',u'玻璃事业部'), (u'真空事业部',u'真空事业部'),(u'塑胶制品',u'塑胶制品'), (u'财务部',u'财务部'),
+                (u'玻璃事业部',u'玻璃事业部'), (u'茶叶事业部',u'茶叶事业部'),(u'真空事业部',u'真空事业部'),(u'塑胶制品',u'塑胶制品'), (u'财务部',u'财务部'),
                 (u'其他',u'其他')],'事业部', required=True),
     }
     

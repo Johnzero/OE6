@@ -5,6 +5,46 @@ import tools
 from osv import fields, osv
 
 
+class sale_report_source_day(osv.osv):
+    _name = "fg_sale.order.report.daily.source"
+    _auto = False
+    _rec_name = 'date'
+    
+    _columns = {
+        'date': fields.date('日期'),
+        'amount': fields.float('金额'),
+        'source':fields.char('事业部', size=10),
+        'due_date_from':fields.function(lambda *a,**k:{}, method=True, type='date',string="开始日期"),
+        'due_date_to':fields.function(lambda *a,**k:{}, method=True, type='date',string="结束日期"),
+    }
+    _order = 'date asc'
+    
+    def init(self, cr):
+           tools.drop_view_if_exists(cr, 'fg_sale_order_report_daily_source')
+           cr.execute("""
+               create or replace view fg_sale_order_report_daily_source as (
+                   SELECT
+                        MIN(line."id")AS "id",
+                        o.date_order AS DATE,
+                        SUM(line.subtotal_amount)AS amount,
+                        COALESCE(product.source, '未知来源') as source
+                   FROM
+                        fg_sale_order_line line
+                   INNER JOIN fg_sale_order o ON line.order_id = o. ID
+                   INNER JOIN product_product product ON line.product_id = product."id"
+                   WHERE
+                        (o."state" = 'done' OR o.minus = TRUE)
+                   AND(
+                        o.date_order > CURRENT_DATE - INTERVAL '3 months'
+                   )
+                   GROUP BY
+                        o.date_order,
+                        product."source"
+                   ORDER BY
+                        o.date_order ASC
+               )
+               """)
+
 
 class sale_report_by_day(osv.osv):
     _name = "fg_sale.order.report.daily"
@@ -26,7 +66,7 @@ class sale_report_by_day(osv.osv):
                    SELECT
                         MIN(line."id")AS "id",
                         o.partner_id,
-                        product."source",
+                        COALESCE(product.source, '未知来源') as source,
                         o.date_order as date,
                         SUM(line.subtotal_amount)AS amount
                    FROM
@@ -45,42 +85,10 @@ class sale_report_by_day(osv.osv):
                """)
                
 
-
 class sale_plan_progress(osv.osv):
     _name = "fg_sale.plan.progress.month"
     _auto = False
     _rec_name = 'plan_month'
-
-
-    def _plastic_progress(self, cr, uid, ids, field_names, args, context=None):
-        report_obj = self.pool.get('fg_sale.plan.progress.month')
-        res = {}
-        
-        for r in self.browse(cr, uid, ids, context=context):
-            progress = 0.0
-            res[r.id] = {'plastic_progress' : (r.plastic_plan/r.plastic*100)}
-        
-        return res
-    
-    def _glass_progress(self, cr, uid, ids, field_names, args, context=None):
-        report_obj = self.pool.get('fg_sale.plan.progress.month')
-        res = {}
-        
-        for r in self.browse(cr, uid, ids, context=context):
-            progress = 0.0
-            res[r.id] = {'glass_progress' : (r.glass_plan/r.glass*100)}
-        
-        return res
-    
-    def _vacuume_progress(self, cr, uid, ids, field_names, args, context=None):
-        report_obj = self.pool.get('fg_sale.plan.progress.month')
-        res = {}
-        
-        for r in self.browse(cr, uid, ids, context=context):
-            progress = 0.0
-            res[r.id] = {'vacuume_progress' : (r.vacuume_plan/r.vacuume*100)}
-        
-        return res
 
     _columns = {
         'plan_month': fields.char('月份', size=24),
@@ -168,7 +176,7 @@ class sale_report_by_month(osv.osv):
               to_char(s.date_order, 'YYYY') as year,
               to_char(s.date_order, 'MM') as month,
               sum(l.subtotal_amount) as amount,
-              p.source as source
+              COALESCE(p.source, '未知来源') as source
             FROM 
               public.fg_sale_order_line l 
             left join product_product p on (l.product_id=p.id) 
@@ -177,4 +185,3 @@ class sale_report_by_month(osv.osv):
              group by p.source,date, year, month
             order by date asc 
             )""")
-

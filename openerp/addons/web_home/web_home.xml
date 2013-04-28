@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record model="ir.ui.view" id="view_user_connection_tree_inherit">
+            <field name="name">user.connection.tree</field>
+            <field name="model">res.users</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Latest Connections" >
+                    <field name="name"/>
+                    <field name="date"/>
+                     <button name='button' string='' type="object" readonly='1' icon="gtk-yes"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="notebook_tree_view">
+            <field name="name">Notebook Tree View</field>
+            <field name="model">notebook</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="" >
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="note"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="notebook_action" model="ir.actions.act_window">
+             <field name="name">Dashboard Notebook</field>
+            <field name="res_model">notebook</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="notebook_tree_view"/>
+            <field name="limit">25</field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="action_user_connection_tree_inherit">
+            <field name="name">User Connections</field>
+            <field name="res_model">res.users</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('date','!=',None),('end_date','=',None)]</field>
+            <field name="view_id" ref="view_user_connection_tree_inherit"></field>
+        </record>
+        
+        <record id="board_config_overview_inherits" model="ir.actions.client">
+            <field name="name">留言板</field>
+            <field name="tag">homepage.overview</field>
+        </record>
+        
+        <record id="board_administration_form_inherit" model="ir.ui.view">
+            <field name="name">board.administration.form.inherit</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Administration Dashboard">
+                    <board style="1-2">
+                        <column>
+                            <action name="%(action_user_connection_tree_inherit)d" string="在线用户" />
+                        </column>
+                        <column>
+                            <action name="%(notebook_action)d" string="留言板"/>
+                            <action name="%(board_config_overview_inherits)d" string=""/>
+                        </column>
+                    </board>
+                </form>
+            </field>
+        </record>
+        
+        <record id="open_board_administration_form_inherit" model="ir.actions.act_window">
+             <field name="name">Administration Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="board_administration_form_inherit"/>
+        </record>
+        
+        <menuitem id='id_web_home' name='Web Home' sequence= '2' web_icon_hover="images/alert2.png" web_icon="images/alert.png" action="open_board_administration_form_inherit"/>
+    
+    </data>
+</openerp>

@@ -2,9 +2,9 @@
 <openerp>
     <data>
         <menuitem id="menu_fg_sale" name="业务开单" sequence="2" web_icon="icon/fg_sale.png" web_icon_hover="icon/fg_sale_hover.png"
-            groups="fg_sale.group_fg_sale_user,fg_sale.group_fg_sale_fga,fg_sale.group_fg_sale_chart,fg_sale.group_fg_sale_manager"/>
+            groups="fg_sale.group_fg_sale_user,fg_sale.group_fg_sale_fga,fg_sale.group_fg_sale_chart,fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_sale_user,fg_sale.group_fg_sale_sale_manager"/>
         <record id="view_partner_client_form" model="ir.ui.view">
-	    <field name="name">res.partner.client.form</field>
+            <field name="name">res.partner.client.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
@@ -15,82 +15,6 @@
             </field>
         </record>
         
-        <record model="ir.ui.view" id="fg_sale_cust_order_form_view">
-            <field name="name">fg_sale.cust.order.form</field>
-            <field name="model">fg_sale.cust.order</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="定制杯清单">
-                    <group col="6" colspan="4">
-                        <field name="name" select="1"/>
-                        <field name="date_order"/>
-                        <field name="user_id"/>
-                        <field name="date_confirm"/>
-                        <field name="confirmer_id"/>
-                        <field name="amount_paid"/>
-                        <field name="amount_left_info"/>
-                        <field name="amount_total"/>
-                    </group>
-                    <notebook colspan="5">
-                        <page string="定制杯清单">
-                            <field name="partner_id"/>
-                            <field name="contact"/>
-                            <field name="phone"/>
-                            <field name="date_delivery"/>
-                            <field name="delivery_addr"/>
-                            <field name="delivery_method"/>
-                            <field name="delivery_fee"/>
-                            <field name="invoice_type"/>
-                            
-                            <field colspan="4" name="order_line" nolabel="1" widget="one2many_list">
-                                <form string="销售明细">
-                                    <field name="product_id"/>
-                                    <field name="product_uom_qty"/>
-                                    <field name="unit_price"/>
-                                    <field name="cust_price"/>
-                                    <field name="cust_price"/>
-                                    <field name="subtotal_amount"/>
-                                    <field name="note"/>
-                                </form>
-                                <tree string="定制杯清单">
-                                    <field name="product_id"/>
-                                    <field name="product_uom_qty"/>
-                                    <field name="unit_price"/>
-                                    <field name="cust_price"/>
-                                    <field name="cust_price"/>
-                                    <field name="subtotal_amount"/>
-                                    <field name="note"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="备注">
-                            <field name="note" nolabel="1"/>
-                        </page>
-                    </notebook>
-                    <group col="6" colspan="4">
-                        <field name="state" widget="statusbar" statusbar_visible="draft,done" statusbar_colors='{"draft":"red","done":"blue"}'/>
-                        <button name="button_dummy" states="draft" string="计算价格" type="object" icon="gtk-execute"/>
-                        <button name="button_review" confirm="一旦审核以后,将不能被修改, 确认审核?" string="审核" type="object" icon="gtk-go-forward" attrs="{'invisible' : [('state', '!=','draft')] }"/>
-                        <button name="button_cancel" confirm="确认取消?" string="取消" type="object" icon="gtk-go-forward" attrs="{'invisible' : [('state', '!=', 'draft')] }"/>
-                    </group>
-                </form>
-            </field>
-        </record>
-        
-        <record model="ir.ui.view" id="fg_sale_cust_order_tree_view">
-            <field name="name">fg_sale.cust.order.tree</field>
-            <field name="model">fg_sale.cust.order</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="定制杯清单">
-                    <field name="name"/>
-                    <field name="partner_id"/>
-                    <field name="date_order"/>
-                    <field name="user_id"/>
-                    <field name="amount_total"/>
-                </tree>
-            </field>
-        </record>
         
         <record model="ir.ui.view" id="fg_sale_order_tree_view">
             <field name="name">fg_sale.order.tree</field>
@@ -152,6 +76,9 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="关联定制单" attrs="{'invisible' : [('cust_order_id', '!=', True)] }">
+                            <field name="cust_order_id"/>
+                        </page>
                         <page string="摘要">
                             <field name="note" nolabel="1"/>
                         </page>
@@ -161,7 +88,7 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,done" statusbar_colors='{"draft":"red","done":"blue"}'/>
                         <button name="button_dummy" states="draft" string="计算价格" type="object" icon="gtk-execute"/>
                         <button name="button_review" confirm="一旦审核以后,将不能被修改, 确认审核?" string="审核" type="object" icon="gtk-go-forward" attrs="{'invisible' : [('state', '!=','draft')] }"/>
-                        <button name="button_cancel" confirm="确认取消?" string="取消" type="object" icon="gtk-go-forward" attrs="{'invisible' : [('state', '!=', 'draft')] }"/>
+                        <button name="button_cancel" confirm="确认取消?" string="取消" type="object" icon="STOCK_CANCEL" attrs="{'invisible' : [('state', '!=', 'draft')] }"/>
                     </group>
                 </form>
             </field>
@@ -235,6 +162,7 @@
                     <field name="user_id">
                         <filter domain="[('user_id','=',uid)]" help="我创建的订单" icon="terp-personal"/>
                     </field>
+                    <field name="confirmer_id"/>
                     <field name="name"/>
                     <field name="due_date_from" filter_domain="[('date_confirm','&gt;=',self)]"/>
                     <field name="due_date_to" filter_domain="[('date_confirm','&lt;=',self)]"/>
@@ -249,6 +177,25 @@
                     </group>
                 </search>
             </field>
+        </record>
+        
+        <record id="action_fg_sale_order_draft" model="ir.actions.act_window">
+            <field name="name">未审核销售单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">fg_sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','draft'),('minus','=',False)]</field>
+            <field name="search_view_id" ref="view_fg_sales_order_filter"/>
+        </record>
+        
+        <record id="action_fg_sale_order_draft_2" model="ir.actions.act_window">
+            <field name="name">今日未审核销售单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">fg_sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','draft'),('minus','=',False),('date_order', '=',(datetime.date.today()).strftime('%Y-%m-%d'))]</field>
         </record>
         
         <record id="action_fg_sale_order_all" model="ir.actions.act_window">
@@ -281,16 +228,6 @@
             <field name="view_mode">form,tree</field>
         </record>
         
-        <record model="ir.actions.act_window" id="action_fg_sale_cust_order_tree_view">
-            <field name="name">定制杯清单</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">fg_sale.cust.order</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="fg_sale_cust_order_tree_view"/>
-        </record>
-        
-        
         <report auto="False" id="report_fg_sale_order_html" model="fg_sale.order"
                 name="fg_sale.order.html" rml="fg_sale/report/order.html"
                 string="打印产品清单" report_type="mako2html" />
@@ -306,21 +243,38 @@
         <menuitem id="menu_fg_sale_order" name="订单" parent="menu_fg_sale" sequence="0"/>
         <menuitem id="menu_fg_sale_order_new" parent="menu_fg_sale_order" action="action_fg_sale_order_new" sequence="1"/>
         <menuitem id="menu_fg_sale_order_all" parent="menu_fg_sale_order" action="action_fg_sale_order_all" sequence="2" groups="fg_sale.group_fg_sale_manager"/>
-        <menuitem id="menu_fg_sale_order_my" parent="menu_fg_sale_order" action="action_fg_sale_order_my" sequence="3"/>
+        
+        <menuitem id="menu_fg_sale_order_draft" parent="menu_fg_sale_order" action="action_fg_sale_order_draft" sequence="3"/>
+        <menuitem id="menu_fg_sale_order_my" parent="menu_fg_sale_order" action="action_fg_sale_order_my" sequence="4"/>
         <menuitem id="menu_fg_sale_chart" name="报表" parent="menu_fg_sale" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart,fg_sale.group_fg_sale_fga" sequence="2"/>
-        <menuitem id="menu_fg_sale_cust_order" name="销售部定制单" parent="menu_fg_sale" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_sale_user,fg_sale.group_fg_sale_sale_manager" sequence="1"/>
+        <menuitem id="menu_fg_sale_cust_order" name="销售部定制单" parent="menu_fg_sale" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_sale_user,fg_sale.group_fg_sale_user,fg_sale.group_fg_sale_sale_manager" sequence="1"/>
         
         
         <menuitem id="menu_fg_sale_chart_by_month" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_report_by_month" sequence="0"/>
-        <menuitem id="menu_fg_sale_amount_partner_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_parnter_wizard" sequence="1"/>
-        <menuitem id="menu_fg_sale_amount_resource_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_resource_wizard" sequence="2"/>
-        <menuitem id="menu_fg_sale_fga_partner_export_wizard" groups="fg_sale.group_fg_sale_fga" parent="menu_fg_sale_chart" action="action_fg_sale_report_fga_partner_export_wizard" sequence="3"/>
-        <menuitem id="menu_fg_sale_fga_product_export_wizard" groups="fg_sale.group_fg_sale_fga" parent="menu_fg_sale_chart" action="action_fg_sale_report_fga_product_export_wizard" sequence="4"/>
+        <menuitem id="menu_fg_sale_chart_by_year" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_report_by_year" sequence="8"/>
+        <menuitem id="menu_fg_sale_chart_by_daily_source" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_order_report_daily_source_tree_view" sequence="1"/>
+        <menuitem id="menu_fg_sale_amount_partner_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_parnter_wizard" sequence="2"/>
+        <menuitem id="menu_fg_sale_amount_resource_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_resource_wizard" sequence="3"/>
+        
+        <menuitem id="menu_fg_sale_discount_product_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_discount_product_wizard" sequence="4"/>
+        <menuitem id="menu_fg_sale_report_product_sale_toplist_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_report_product_sale_toplist_export_wizard" sequence="5"/>
+        
+        <menuitem id="menu_fg_sale_fga_partner_export_wizard" groups="fg_sale.group_fg_sale_fga" parent="menu_fg_sale_chart" action="action_fg_sale_report_fga_partner_export_wizard" sequence="4"/>
+        <menuitem id="menu_fg_sale_fga_product_export_wizard" groups="fg_sale.group_fg_sale_fga" parent="menu_fg_sale_chart" action="action_fg_sale_report_fga_product_export_wizard" sequence="5"/>
+        <menuitem id="menu_fg_sale_fga_partner_product_export_wizard" groups="fg_sale.group_fg_sale_fga" parent="menu_fg_sale_chart" action="action_fg_sale_report_fga_partner_product_export_wizard" sequence="6"/>
+        <menuitem id="menu_fg_sale_fg_partner_product_export_wizard" groups="fg_sale.group_fg_sale_chart" parent="menu_fg_sale_chart" action="action_fg_sale_report_fg_partner_product_export_wizard" sequence="7"/>
         
         <menuitem id="menu_fg_sale_report_export_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_report_export_wizard" sequence="10"/>
         <menuitem id="menu_fg_sale_report_order_export_wizard" parent="menu_fg_sale_chart" groups="fg_sale.group_fg_sale_manager,fg_sale.group_fg_sale_chart" action="action_fg_sale_report_order_export_wizard" sequence="11"/>
         
-        <menuitem id="fg_sale_cust_order_menu" parent="menu_fg_sale_cust_order" action="action_fg_sale_cust_order_tree_view" sequence="0"/>
+        
+        <menuitem id="fg_sale_cust_order_menu_new" parent="menu_fg_sale_cust_order" action="action_fg_sale_cust_order_new" sequence="0"/>
+        <menuitem id="fg_sale_cust_order_menu_draft" parent="menu_fg_sale_cust_order" action="action_fg_sale_cust_order_tree_view_draft" sequence="1"/>
+        <menuitem id="fg_sale_cust_order_menu_submit" parent="menu_fg_sale_cust_order" action="action_fg_sale_cust_order_tree_view_submit" sequence="2"/>
+        <menuitem id="fg_sale_cust_order_menu_review" parent="menu_fg_sale_cust_order" action="action_fg_sale_cust_order_tree_view_review" sequence="3"/>
+        <menuitem id="fg_sale_cust_order_menu_reset" parent="menu_fg_sale_cust_order" action="action_fg_sale_cust_order_tree_view_reset" sequence="4"/>
+        
+        
         <menuitem id="menu_fg_sale_price_protection" name="价格保护" parent="menu_fg_sale" sequence="5"/>
         <menuitem id="fg_sale_price_protection_tree_menu" parent="menu_fg_sale_price_protection" action="action_fg_sale_price_protection_tree_view" sequence="0"/>
         <menuitem id="fg_sale_price_protection_all_tree_menu" parent="menu_fg_sale_price_protection" action="action_fg_sale_price_protection_all_tree_view" sequence="1"/>

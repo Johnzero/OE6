@@ -22,6 +22,16 @@ class RPCProxy(object):
         self.server = server
     def get(self, ressource):
         return RPCProxyOne(self.server, ressource)
+        
+
+class Config(object):
+    def __init__(self, su, sp, sd, lo, ps):
+        self.server_url = su
+        self.server_port = sp
+        self.server_db = sd
+        self.login = lo
+        self.password = ps
+
 
 class fg_sync_scheduler(osv.osv):
     _name = "fg_sync.scheduler"
@@ -30,15 +40,7 @@ class fg_sync_scheduler(osv.osv):
     _columns = {
 
     }
-    _defaults = {
-        'server_port': lambda *args: 8069
-    }
     
-    def do_push(self, cr, uid, ids, model):
-        pass
-
-    def do_pull(self, cr, uid, ids, model):
-        pass
     
     def do_run_scheduler(self, cr, uid, ids=None, context=None):
         """Scheduler for event reminder
@@ -51,13 +53,33 @@ class fg_sync_scheduler(osv.osv):
         if context is None:
             context = {}
         
+        try:
+            pool1 = RPCProxy(Config('192.168.0.200', 8069, 'FG', 'admin','zaq1@WSX'))
+            target_order_obj = pool1.get('fg_sale.order')
+            target_order_line_obj = pool1.get('fg_sale.order.line')
         
-        #
-        # for sync orders only.
-        # if we come across 
-        #pool = pooler.get_pool(cr.dbname)
-        #pool1 = RPCProxy(server)
+            source_order_obj = self.pool.get('fg_sale.order')
+            source_order_line_obj = self.pool.get('fg_sale.order.line')
+        except:
+            print 'can not connect to slave....'
+            return True
         
+        def do_pull():
+            # get all that's not sync-ed
+            print 'do pull......................'
+            for order_id in source_order_obj.search(cr, uid, [('sync','=',False)]):
+                order_data = source_order_obj.copy_data(cr, uid, order_id)
+                order = source_order_obj.browse(cr, uid, [order_id])[0]
+                
+                order['sync'] = True
+                order['state'] = order.state
+                
+                #save order first. get id
+                id = target_order_obj.create(cr, order.user_id, order)
+                print id,' added.'
         
+        do_pull()
         
         return True
+    
+    

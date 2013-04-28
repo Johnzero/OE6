@@ -43,10 +43,11 @@ class cash_bill_import(osv.osv_memory):
                     'user_id':uid,
                     'date_paying':time.strftime(DEFAULT_SERVER_DATE_FORMAT, date),
                     'category_id':1,
+                    'note':sh.cell(rx, 1).value,
                     'amount':float(cash_in),
                 }
                 #check for partner_id
-                partner_name = sh.cell(rx, 2).value.strip()
+                partner_name = str(sh.cell(rx, 2).value).strip()
                 if partner_name:
                     partner_list = partner_obj.search(cr, uid, [('name','=',partner_name)])
                     if partner_list:
@@ -187,11 +188,11 @@ class reconcile_wizard(osv.osv_memory):
 
 class reconcile_view_wizard(osv.osv_memory):
     _name = "fg_account.reconcile.view.wizard"
-    _description = "对账单查询"
+    _description = "对账单明细"
     
     _columns = {
         'partner_id': fields.many2one('res.partner', '客户', required=True),
-        'reconciled':fields.boolean('已对账'),
+        #'reconciled':fields.boolean('已对账'),
         'date_start': fields.date('开始日期', required=True),
         'date_end': fields.date('结束日期', required=True),
     }
@@ -203,7 +204,7 @@ class reconcile_view_wizard(osv.osv_memory):
     def view(self, cr, uid, ids, context=None):
         this = self.browse(cr, uid, ids)[0]
         
-        #计算
+        #计算之前的汇总
         statement = """
         SELECT
         	pc."t" AS T,
@@ -211,30 +212,32 @@ class reconcile_view_wizard(osv.osv_memory):
         FROM
         	fg_account_period_check pc
         WHERE
-        	pc.reconciled = %s
-        AND pc.o_partner = %s
+        	pc.o_partner = %s
         AND pc.o_date < to_date('%s', 'YYYY-MM-DD')
         GROUP BY
         	T
         """
         amount_dict = dict()
-        cr.execute(statement % (this.reconciled, this.partner_id.id, this.date_start))
+        cr.execute(statement % (this.partner_id.id, this.date_start))
+
         for row in cr.fetchall():
             amount_dict[row[0]] = row[1]
         
         sent = amount_dict.get(u'发货额', 0)
-        back = amount_dict.get(u'退回', 0)
+        back = amount_dict.get(u'退回', 0)  #负数
         cash_in = amount_dict.get(u'收现', 0)
         bank_in = amount_dict.get(u'转帐', 0)
         discount = amount_dict.get(u'让利', 0)
+        
+        #期初余额
         inital_amount = sent + back - cash_in - bank_in - discount
+
         
         # search and save the result to reconcile_item table.
         period_check_obj = self.pool.get('fg_account.period.check')
         reconcile_item_obj = self.pool.get('fg_account.reconcile.item')
-        item_ids = period_check_obj.search(cr, uid, [('reconciled','=',this.reconciled),('o_partner','=',this.partner_id.id),
+        item_ids = period_check_obj.search(cr, uid, [('o_partner','=',this.partner_id.id),
                 ('o_date','>=',this.date_start),('o_date','<=',this.date_end)], order='ID ASC')
-        
         
         last_amount = inital_amount
         ids = []
@@ -267,6 +270,7 @@ class reconcile_view_wizard(osv.osv_memory):
 
         result = act_obj.read(cr, uid, [id], context=context)[0]
         result['domain'] = "[('id','in', ["+','.join(map(str, ids))+"])]"
+        result['limit'] = 1000
         return result
         
 
@@ -342,7 +346,7 @@ class reconcile_export(osv.osv_memory):
             AND o_partner = %s
             AND o_date >= to_date('%s', 'YYYY-MM-DD')
             AND o_date <= to_date('%s', 'YYYY-MM-DD')
-            ORDER BY id asc
+            ORDER BY o_date asc
             """
             
             
@@ -351,7 +355,7 @@ class reconcile_export(osv.osv_memory):
             sheet1.write(0, 1, '开始日期: %s' % this.date_start)
             sheet1.write(0, 2, '截止日期: %s' % this.date_end)
             
-            sources = ['日期','单号','发货额','退回','收现','备注','转账','让利','余额','是否对账']
+            sources = ['日期','单号','发货额','退货','收现','备注','转账','让利','余额','是否对账']
             c_i = 0
             for c in sources:
                 sheet1.write(1, c_i, c)
@@ -367,21 +371,22 @@ class reconcile_export(osv.osv_memory):
                 sheet1.write(i, 1, p[1])
                 sheet1.write(i, 9, p[3] and '是' or '否')
                 sheet1.write(i, 5, p[5])
+                
                 if p[2] == '发货额':
                     last_amount = last_amount + p[4]
-                    sheet1.write(i, 2, p[4])
-                elif p[2] == '退回':
+                    sheet1.write(i, 2, abs(p[4]))
+                elif p[2] == '退货':
                     last_amount = last_amount + p[4]
-                    sheet1.write(i, 3, p[4])
-                elif p[2] == '收现':
-                    last_amount = last_amount - p[4]
-                    sheet1.write(i, 4, p[4])
+                    sheet1.write(i, 3, abs(p[4]))
+                elif p[2] == '现金':
+                    last_amount = last_amount + p[4]
+                    sheet1.write(i, 4, abs(p[4]))
                 elif p[2] == '转账':
-                    last_amount = last_amount - p[4]
-                    sheet1.write(i, 6, p[4])
+                    last_amount = last_amount + p[4]
+                    sheet1.write(i, 6, abs(p[4]))
                 elif p[2] == '让利':
-                    last_amount = last_amount - p[4]
-                    sheet1.write(i, 7, p[4])
+                    last_amount = last_amount + p[4]
+                    sheet1.write(i, 7, abs(p[4]))
                     
                 sheet1.write(i, 8, last_amount)
                 

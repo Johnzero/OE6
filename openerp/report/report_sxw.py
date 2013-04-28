@@ -452,6 +452,7 @@ class report_sxw(report_rml, preprocess.report):
         return self.create_single_html2html(cr, uid, ids, data, report_xml, context or {})
 
     def create_source_mako2html(self, cr, uid, ids, data, report_xml, context=None):
+        print data,report_xml,'-----------------------'
         return self.create_single_mako2html(cr, uid, ids, data, report_xml, context or {})
 
     def create_source_pdf(self, cr, uid, ids, data, report_xml, context=None):

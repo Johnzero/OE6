@@ -1,10 +1,11 @@
 # -*- encoding: utf-8 -*-
 
 {
-    'name': 'db view',
+    'name': 'FG Order Scheduler',
     'version': '1.0',
     'category' : 'utils',
-    'description': """db view""",
+    'description': """FG Order Scheduler.
+    Do install this on Master Name!!!!!""",
     'author': 'openerp',
     'website': 'http://www.openerp.org',
     'depends': ['base', 'fg_sale'],
